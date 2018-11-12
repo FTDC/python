@@ -1,38 +1,71 @@
+import json
+import os
 import re
+from _md5 import md5
+from multiprocessing.pool import Pool
 from urllib.parse import urlencode
 from urllib.request import Request, urlopen
 
 import requests
 from requests.exceptions import HTTPError
-import json
 
-data = {
-    'offset': 0,
-    'format': 'json',
-    'keyword': '街拍',
-    'autoload': 'true',
-    'count': 20,
-    'cur_tab': 3,
-    'from': 'gallery'
-}
+from Support.Helper import dd
 
-url = "https://www.toutiao.com/search_content/?" + urlencode(data)
-try:
-    response = requests.get(url)
 
-    if response.status_code == 200:
-        print(response.text)
-    #     print(response)
-    # print("链接错误1")
+def get_index_page():
+    data = {
+        'offset': 0,
+        'format': 'json',
+        'keyword': '街拍',
+        'autoload': 'true',
+        'count': 20,
+        'cur_tab': 3,
+        'from': 'gallery'
+    }
 
-except HTTPError as hte:
-    print("链接错误")
+    url = "https://www.toutiao.com/search_content/?" + urlencode(data)
+    try:
+        response = requests.get(url)
 
-responseJson = json.loads(response.text, encoding="utf-8")
+        if response.status_code == 200:
+            print(response.text)
+        #     print(response)
+        # print("链接错误1")
 
-print(responseJson)
-print(responseJson['data'])
+    except HTTPError as hte:
+        print("链接错误")
 
+    responseJson = json.loads(response.text, encoding="utf-8")
+    print(responseJson['data'])
+
+    return responseJson['data']
+
+
+def download_image(url):
+    print("Downloading .....", url)
+    fileName = "time.microsecond" + ".jpg"
+    # dd(url)
+    # exit()
+    try:
+        response = requests.get(url)
+        if response.status_code == 200:
+            # print(response.content)
+            saveImage(response.content)
+            # return response.content
+        return None
+    except ConnectionError:
+        return None
+
+
+def saveImage(content):
+    # print(content)
+    # exit()
+    file_path = '{0}/{1}.{2}'.format(os.getcwd(), md5(content).hexdigest(), 'jpg')
+    print(file_path)
+    if not os.path.exists(file_path):
+        with open(file_path, 'wb') as f:
+            f.write(content)
+            f.close()
 
 
 def get_page(url):
@@ -44,22 +77,53 @@ def get_page(url):
     html = urlopen(req).read().decode('utf-8')
     # print(html)
 
-    pattern = re.compile('gallery: JSON.parse\("(.*)"\)', re.S)
+    # pattern = re.compile('gallery: JSON.parse\("(.*)\),', re.S)
+    pattern = re.compile('gallery: JSON.parse\("(.*)"\),', re.S)
 
     result = re.search(pattern, html)
+    jsonString = result.group(1).replace("\\", '')
+    print(jsonString, "json")
+    # exit()
     if result:
-        jsonImgs = json.loads(result)
-        print(jsonImgs)
-    print(result, "json")
+        jsonImgs = json.loads(jsonString)
+        urlList = jsonImgs['sub_images']
+
+        urlimg = []
+        for img in urlList:
+            urlimg.append(img["url"])
+            # print(img["url"])
+            download_image(img['url'])
+        # dd(urlimg)
+
+        # 子线程里面不能申明多线程
+        # pool = Pool()
+        # group = urlimg
+        # pool.map(download_image, group)
+        # pool.join()
+        # pool.close()
+
+        # print(urlList)
 
     # print(html.read().decode('utf-8'))
 
 
 # listAritic
-for item in responseJson['data']:
-    print(item['open_url'])
-    url = "https://www.toutiao.com" + item["open_url"]
-    print(requests.get("https://www.toutiao.com" + item["open_url"]).text)
+def main(offset):
+    # dump(get_index_page())
+    for item in get_index_page():
+        # dump(item)
+        url = "https://www.toutiao.com" + item["open_url"]
+        print(requests.get("https://www.toutiao.com" + item["open_url"]).text)
 
-    get_page(url)
-    exit()
+        get_page(url)
+        # exit()
+
+
+if __name__ == '__main__':
+    pool = Pool()
+    # group = ([x * 20 for x in range(1, 4)])
+    # # dump(group)
+    # pool.map(main, group)
+    # pool.join()
+    pool.close()
+    main(1)
