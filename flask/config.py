@@ -1,0 +1,3 @@
+REDIS_HOST = '192.168.121.37'
+REDIS_DB = 2
+REDIS_PASS = 'isec@@redis'

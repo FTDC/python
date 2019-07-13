@@ -9,7 +9,6 @@ from urllib.request import Request, urlopen
 print(time.strftime('%Y-%m-%d %H:%M:%S %w-%Z', time.localtime()))
 
 
-
 def get_page_one(url):
     # print(url)
     httpReq = Request(url)
@@ -57,12 +56,12 @@ def main(page):
 # print(__name__)
 if __name__ == "__main__":
     for i in range(10):
-        main(i * 10)
-    # 多线程
-    # pool = Pool()
-    # pool.map(main, [i * 10 for i in range(10)])
-    # pool.close()
-    # pool.join()
+        # main(i * 10)
+        # 多线程
+        pool = Pool()
+        pool.map(main, [i * 10 for i in range(10)])
+        pool.close()
+        pool.join()
 
 print(time.strftime('%Y-%m-%d %H:%M:%S', time.localtime()))
 #

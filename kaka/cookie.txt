@@ -1,0 +1,5 @@
+# Netscape HTTP Cookie File
+# http://curl.haxx.se/rfc/cookie_spec.html
+# This is a generated file!  Do not edit.
+
+www.lipin.com	FALSE	/	FALSE	1562966035	PHPSESSID	e3024a70b28913b73def1db7ccf22cc5
